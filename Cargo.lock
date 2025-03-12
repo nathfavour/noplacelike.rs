@@ -1433,6 +1433,7 @@ dependencies = [
  "askama_actix",
  "dirs",
  "futures",
+ "lazy_static",
  "local-ip-address",
  "qr2term",
  "sanitize-filename",

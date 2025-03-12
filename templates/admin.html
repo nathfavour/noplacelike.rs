@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>noplacelike Admin</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Modern Admin UI Styles */
+        :root {
+            --primary: #4444ff;
+            --bg-dark: #1a1a1a;
+            --text-light: #ffffff;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .admin-header {
+            background: var(--bg-dark);
+            color: var(--text-light);
+            padding: 1rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .main-content {
+            margin-top: 60px;
+            padding: 2rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .scroll-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .dir-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .dir-table th, .dir-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .button:hover { opacity: 0.9; }
+        
+        .home-link {
+            color: white;
+            text-decoration: none;
+            background: rgba(255,255,255,0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .home-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header class="admin-header">
+        <h1>noplacelike Server Administration</h1>
+        <a href="/ui" class="home-link">Back to Home</a>
+    </header>
+
+    <main class="main-content">
+        <section class="section">
+            <h2>Audio Streaming Directories</h2>
+            <div class="input-group">
+                <input type="text" id="newDir" placeholder="Enter directory path (e.g., ~/Music)">
+                <button class="button" onclick="addDirectory()">Add Directory</button>
+            </div>
+            
+            <div class="scroll-container">
+                <table class="dir-table">
+                    <thead>
+                        <tr>
+                            <th>Directory Path</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dirList">
+                        <!-- Directories will be listed here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Configuration</h2>
+            <p style="margin-bottom: 1rem;">Server configuration file is stored at <code>~/.noplacelikeconfig.json</code></p>
+            
+            <div class="input-group">
+                <button class="button" onclick="window.location.reload()">Refresh Page</button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        async function loadDirectories() {
+            try {
+                const res = await fetch('/admin/dirs');
+                const data = await res.json();
+                const tbody = document.getElementById('dirList');
+                
+                if (!data.dirs || data.dirs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="2">No audio directories configured</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = data.dirs.map(dir => `
+                    <tr>
+                        <td>${dir}</td>
+                        <td>
+                            <button class="button" onclick="removeDirectory('${dir}')">Remove</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading directories:', error);
+            }
+        }
+
+        async function addDirectory() {
+            const input = document.getElementById('newDir');
+            const dir = input.value.trim();
+            if (!dir) return;
+
+            try {
+                const res = await fetch('/admin/dirs', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({dir})
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    input.value = '';
+                    loadDirectories();
+                } else {
+                    alert(data.error || 'Failed to add directory');
+                }
+            } catch (error) {
+                alert('Error adding directory: ' + error.message);
+            }
+        }
+
+        async function removeDirectory(dir) {
+            if (!confirm(`Are you sure you want to remove "${dir}" from audio directories?`)) {
+                return;
+            }
+            
+            try {
+                const res = await fetch('/admin/dirs', {
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({dir})
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    loadDirectories();
+                } else {
+                    alert(data.error || 'Failed to remove directory');
+                }
+            } catch (error) {
+                alert('Error removing directory: ' + error.message);
+            }
+        }
+
+        // Initialize
+        loadDirectories();
+    </script>
+</body>
+</html>

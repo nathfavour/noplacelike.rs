@@ -1,7 +1,7 @@
 use dirs::home_dir;
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,7 +23,7 @@ impl Default for Config {
 
 // Store config globally for ease of access
 lazy_static::lazy_static! {
-    static ref CONFIG: Arc<Mutex<Config>> = Arc::new(Mutex::new(Config::default()));
+    pub(crate) static ref CONFIG: Arc<Mutex<Config>> = Arc::new(Mutex::new(Config::default()));
 }
 
 pub fn get_config_path() -> PathBuf {
