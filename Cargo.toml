@@ -2,5 +2,34 @@
 name = "noplacelike"
 version = "0.1.0"
 edition = "2021"
+authors = ["nathfavour"]
+description = "Share clipboard, files, and audio across devices on your local network"
 
 [dependencies]
+# Web framework
+actix-web = "4.3"
+actix-files = "0.6"
+actix-multipart = "0.6"
+actix-rt = "2.8"
+
+# Async runtime
+tokio = { version = "1.28", features = ["full"] }
+
+# Serialization/Deserialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Templates
+askama = "0.12"
+askama_actix = "0.14"
+
+# Utilities
+futures = "0.3"
+sanitize-filename = "0.4"
+dirs = "5.0"
+local-ip-address = "0.5"
+qr2term = "0.3"
+uuid = { version = "1.3", features = ["v4"] }
+
+# For clipboard support
+arboard = "3.2"
