@@ -23,7 +23,7 @@ impl Default for Config {
 
 // Store config globally for ease of access
 lazy_static::lazy_static! {
-    pub(crate) static ref CONFIG: Arc<Mutex<Config>> = Arc::new(Mutex::new(Config::default()));
+    pub static ref CONFIG: Arc<Mutex<Config>> = Arc::new(Mutex::new(Config::default()));
 }
 
 pub fn get_config_path() -> PathBuf {

@@ -44,7 +44,7 @@ impl SharedClipboard {
     /// Try to get text from the system clipboard
     pub fn get_from_system(&self) -> Result<String, String> {
         match SystemClipboard::new() {
-            Ok(clipboard) => {
+            Ok(mut clipboard) => {
                 clipboard.get_text()
                     .map_err(|e| format!("Failed to get system clipboard: {}", e))
             },

@@ -1,13 +1,10 @@
 use actix_files::NamedFile;
-use actix_multipart::{Field, Multipart};
-use actix_web::{get, post, web, Error, HttpRequest, HttpResponse, Result, Scope};
+use actix_multipart::{Field, Multipart, MultipartError};
+use actix_web::{get, post, web, Error, HttpRequest, HttpResponse, Result, Scope, ResponseError};
 use arboard::Clipboard;
 use futures::{StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::io::Write;
-use std::path::Path;
-use std::sync::Mutex;
+use std::{fs, io::Write, path::Path, sync::Mutex, fmt};
 
 use crate::config::ensure_upload_folder;
 
@@ -145,7 +142,7 @@ async fn upload_file(mut payload: Multipart) -> Result<HttpResponse, Error> {
 
 #[get("/files/{filename}")]
 async fn download_file(req: HttpRequest, filename: web::Path<String>) -> Result<HttpResponse, Error> {
-    let sanitized_filename = sanitize_filename::sanitize(&filename);
+    let sanitized_filename = sanitize_filename::sanitize(filename.as_str());
     let file_path = ensure_upload_folder().join(&sanitized_filename);
     
     match NamedFile::open(&file_path) {
@@ -183,7 +180,7 @@ async fn save_file(mut field: Field, file_path: impl AsRef<Path>) -> std::io::Re
     while let Some(chunk_result) = field.next().await {
         match chunk_result {
             Ok(data) => file.write_all(&data)?,
-            Err(e) => return Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
+            Err(e) => return Err(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())),
         }
     }
     
