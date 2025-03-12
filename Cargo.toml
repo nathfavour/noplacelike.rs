@@ -11,6 +11,8 @@ actix-web = "4.3"
 actix-files = "0.6"
 actix-multipart = "0.6"
 actix-rt = "2.8"
+actix-ws = "0.2.5"  # WebSockets support
+actix-web-actors = "4.2.0" # Actor support for WebSockets
 
 # Async runtime
 tokio = { version = "1.28", features = ["full"] }
