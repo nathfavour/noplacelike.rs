@@ -15,7 +15,7 @@ pub async fn run_server(host: String, port: u16, config: Config) -> io::Result<(
     let clipboard_data = web::Data::new(std::sync::Mutex::new(String::new()));
     
     // Print server URLs and QR codes
-    print_server_info(&host, port);
+    print_server_info(port);
     
     // Start HTTP server
     HttpServer::new(move || {
@@ -38,7 +38,7 @@ pub async fn run_server(host: String, port: u16, config: Config) -> io::Result<(
     .await
 }
 
-fn print_server_info(host: &str, port: u16) {
+fn print_server_info(port: u16) {
     // Get all available IP addresses
     let ips = get_all_ips();
     

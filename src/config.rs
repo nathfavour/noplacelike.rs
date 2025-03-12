@@ -98,7 +98,7 @@ pub fn save_config(config: &Config) {
     });
 }
 
-pub fn update_config(mut config: Config) -> Config {
+pub fn update_config(config: Config) -> Config {
     save_config(&config);
     config
 }

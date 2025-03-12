@@ -35,26 +35,24 @@ async fn list_audio() -> Result<HttpResponse, Error> {
     let mut files_by_dir = HashMap::new();
     
     for folder in audio_folders {
-        if let Ok(folder_str) = folder.to_str() {
-            if let Some(folder_str) = folder_str.to_owned().into() {
-                let mut files = Vec::new();
-                
-                if let Ok(entries) = fs::read_dir(&folder) {
-                    for entry in entries {
-                        if let Ok(entry) = entry {
-                            if let Ok(file_type) = entry.file_type() {
-                                if file_type.is_file() {
-                                    if let Some(file_name) = entry.file_name().to_str() {
-                                        files.push(file_name.to_string());
-                                    }
+        if let Some(folder_str) = folder.to_str() {
+            let mut files = Vec::new();
+            
+            if let Ok(entries) = fs::read_dir(&folder) {
+                for entry in entries {
+                    if let Ok(entry) = entry {
+                        if let Ok(file_type) = entry.file_type() {
+                            if file_type.is_file() {
+                                if let Some(file_name) = entry.file_name().to_str() {
+                                    files.push(file_name.to_string());
                                 }
                             }
                         }
                     }
                 }
-                
-                files_by_dir.insert(folder_str, files);
             }
+            
+            files_by_dir.insert(folder_str.to_string(), files);
         }
     }
     

@@ -1,6 +1,6 @@
 use actix_files::NamedFile;
 use actix_multipart::{Field, Multipart};
-use actix_web::{get, post, web, Error, HttpResponse, Result, Scope};
+use actix_web::{get, post, web, Error, HttpRequest, HttpResponse, Result, Scope};
 use arboard::Clipboard;
 use futures::{StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,7 @@ use std::io::Write;
 use std::path::Path;
 use std::sync::Mutex;
 
-use crate::config::{ensure_upload_folder, expand_path};
+use crate::config::ensure_upload_folder;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ClipboardRequest {
@@ -144,36 +144,47 @@ async fn upload_file(mut payload: Multipart) -> Result<HttpResponse, Error> {
 }
 
 #[get("/files/{filename}")]
-async fn download_file(web::Path(filename): web::Path<String>) -> Result<HttpResponse, Error> {
+async fn download_file(req: HttpRequest, filename: web::Path<String>) -> Result<HttpResponse, Error> {
     let sanitized_filename = sanitize_filename::sanitize(&filename);
-    let file_path = ensure_upload_folder().join(sanitized_filename);
+    let file_path = ensure_upload_folder().join(&sanitized_filename);
     
-    let file = match NamedFile::open(&file_path) {
-        Ok(file) => file,
+    match NamedFile::open(&file_path) {
+        Ok(file) => {
+            let file_name = file_path.file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string();
+            
+            let disposition = actix_web::http::header::ContentDisposition {
+                disposition: actix_web::http::header::DispositionType::Attachment,
+                parameters: vec![
+                    actix_web::http::header::DispositionParam::Filename(file_name)
+                ],
+            };
+            
+            Ok(file
+                .use_last_modified(true)
+                .set_content_disposition(disposition)
+                .into_response(&req))
+        },
         Err(_) => {
-            return Ok(HttpResponse::NotFound().json(StatusResponse {
+            Ok(HttpResponse::NotFound().json(StatusResponse {
                 status: "error".to_string(),
                 filename: None,
                 error: Some("File not found".to_string()),
-            }));
+            }))
         }
-    };
-    
-    Ok(file
-        .use_last_modified(true)
-        .set_content_disposition(
-            actix_web::http::header::ContentDisposition::attachment()
-                .filename(Path::new(&file_path).file_name().unwrap().to_string_lossy())
-        )
-        .into_response())
+    }
 }
 
 async fn save_file(mut field: Field, file_path: impl AsRef<Path>) -> std::io::Result<()> {
     let mut file = fs::File::create(file_path)?;
     
-    while let Some(chunk) = field.next().await {
-        let data = chunk?;
-        file.write_all(&data)?;
+    while let Some(chunk_result) = field.next().await {
+        match chunk_result {
+            Ok(data) => file.write_all(&data)?,
+            Err(e) => return Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
+        }
     }
     
     Ok(())
