@@ -15,7 +15,7 @@ actix-ws = "0.2.5"  # WebSockets support
 actix-web-actors = "4.2.0" # Actor support for WebSockets
 
 # Async runtime
-tokio = { version = "1.28", features = ["full"] }
+tokio = { version = "1.44", features = ["full"] }
 
 # Serialization/Deserialization
 serde = { version = "1.0", features = ["derive"] }
